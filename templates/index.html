@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CVE List</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f4f4f4; cursor: pointer; }
+        button, select { padding: 6px 12px; margin: 5px; cursor: pointer; }
+        .filter { margin-bottom: 10px; }
+        tr:hover { background-color: #f1f1f1; }
+    </style>
+</head>
+<body>
+    <h1>CVE List</h1>
+
+    <div class="filter">
+        Year: <input type="number" id="year" placeholder="e.g. 2023">
+        Min Score: <input type="number" id="min_score" step="0.1" placeholder="e.g. 7.5">
+        Last N Days: <input type="number" id="last_n_days" placeholder="e.g. 30">
+        Results per Page: 
+        <select id="limit" onchange="applyFilters()">
+            <option value="10" selected>10</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+        </select>
+        <button onclick="applyFilters()">Apply Filters</button>
+    </div>
+
+    <div>Total Records: <span id="totalCount">0</span></div>
+
+    <table id="cveTable">
+        <thead>
+            <tr>
+                <th onclick="sortCVEs('cve_id')">CVE ID</th>
+                <th onclick="sortCVEs('published')">Published</th>
+                <th onclick="sortCVEs('last_modified')">Last Modified</th>
+                <th onclick="sortCVEs('base_score')">Score</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- CVE rows will be injected here -->
+        </tbody>
+    </table>
+
+    <div>
+        <button onclick="prevPage()">Previous</button>
+        <span id="pageInfo">Page 1</span>
+        <button onclick="nextPage()">Next</button>
+    </div>
+
+    <script>
+        let skip = 0;
+        let limit = parseInt(document.getElementById('limit').value);
+        let currentSort = "published";
+        let currentOrder = "desc";
+        let totalRecords = 0;
+
+        async function fetchCVEs() {
+            limit = parseInt(document.getElementById('limit').value);
+            const year = document.getElementById('year').value;
+            const min_score = document.getElementById('min_score').value;
+            const last_n_days = document.getElementById('last_n_days').value;
+
+            let url = `/cves?skip=${skip}&limit=${limit}&sort_by=${currentSort}&order=${currentOrder}`;
+            if (year) url += `&year=${year}`;
+            if (min_score) url += `&min_score=${min_score}`;
+            if (last_n_days) url += `&last_n_days=${last_n_days}`;
+
+            const res = await fetch(url);
+            const data = await res.json();
+
+            totalRecords = data.count;
+            document.getElementById('totalCount').innerText = totalRecords;
+
+            const tbody = document.querySelector('#cveTable tbody');
+            tbody.innerHTML = '';
+
+            data.data.forEach(cve => {
+                const row = document.createElement('tr');
+                row.onclick = () => { window.location.href = `/cves/${cve.cve_id}`; };
+                row.innerHTML = `
+                    <td>${cve.cve_id}</td>
+                    <td>${cve.published || ''}</td>
+                    <td>${cve.last_modified || ''}</td>
+                    <td>${cve.base_score || ''}</td>
+                    <td>${cve.description}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            document.getElementById('pageInfo').innerText = `Page ${Math.floor(skip / limit) + 1}`;
+        }
+
+        function nextPage() {
+            if (skip + limit < totalRecords) {
+                skip += limit;
+                fetchCVEs();
+            }
+        }
+
+        function prevPage() {
+            if (skip >= limit) {
+                skip -= limit;
+                fetchCVEs();
+            }
+        }
+
+        function applyFilters() {
+            skip = 0;
+            fetchCVEs();
+        }
+
+        function sortCVEs(field) {
+            if (currentSort === field) {
+                currentOrder = currentOrder === "desc" ? "asc" : "desc";
+            } else {
+                currentSort = field;
+                currentOrder = "desc";
+            }
+            fetchCVEs();
+        }
+
+        // Initial load
+        fetchCVEs();
+    </script>
+</body>
+</html>

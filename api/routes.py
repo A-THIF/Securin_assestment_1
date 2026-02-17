@@ -1,0 +1,56 @@
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from core.database import SessionLocal
+from models.model import CVE
+from typing import Optional, List
+from services.filter import get_cves  # your helper function
+
+router = APIRouter()
+
+# DB dependency
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+# CVE list route
+@router.get("/cves")
+def read_cves(
+    skip: int = 0,
+    limit: int = 10,
+    sort_by: str = "published",
+    order: str = "desc",
+    cve_id: Optional[str] = None,
+    year: Optional[int] = None,
+    min_score: Optional[float] = None,
+    last_n_days: Optional[int] = None,
+    db: Session = Depends(get_db)
+):
+    results, total_count = get_cves(
+        db,
+        cve_id=cve_id,
+        year=year,
+        min_score=min_score,
+        last_n_days=last_n_days,
+        skip=skip,
+        limit=limit,
+        sort_by=sort_by,
+        order=order
+    )
+
+    return {
+        "data": [cve.to_dict() for cve in results],
+        "skip": skip,
+        "limit": limit,
+        "count": total_count
+    }
+
+# Single CVE route
+@router.get("/cves/{cve_id}")
+def get_single_cve(cve_id: str, db: Session = Depends(get_db)):
+    cve = db.query(CVE).filter(CVE.cve_id == cve_id).first()
+    if cve:
+        return cve.to_dict()
+    return {"error": "CVE not found"}
