@@ -9,13 +9,20 @@ class CVE(Base):
     published = Column(DateTime)
     last_modified = Column(DateTime)
     base_score = Column(Float)
+    identifier = Column(String, nullable=True)  # email or owner identifier
+    status = Column(String, nullable=True)      # e.g., 'Vulnerable', 'Rejected', etc.
+
 
     # Add this helper to convert model instance to dictionary
     def to_dict(self):
         return {
-            "cve_id": self.cve_id,
-            "published": self.published.isoformat() if self.published else None,
-            "last_modified": self.last_modified.isoformat() if self.last_modified else None,
-            "base_score": self.base_score,
-            "description": self.description
-        }
+        "cve_id": self.cve_id,
+        "description": self.description,
+        "published": self.published.isoformat(),
+        "last_modified": self.last_modified.isoformat(),
+        "status": self.status,
+        "identifier": self.identifier,
+        "metrics": self.metrics,             # Make sure you store CVSS metrics in DB or fetch dynamically
+        "configurations": self.configurations  # Store as JSON in DB if needed
+    }
+

@@ -8,6 +8,8 @@ class CVESchema(BaseModel):
     published: datetime
     last_modified: datetime
     base_score: Optional[float]
+    identifier: Optional[str]
+    status: Optional[str]
 
     class Config:
-        orm_mode = True  # <-- allows SQLAlchemy objects to be returned as JSON
+        orm_mode = True
