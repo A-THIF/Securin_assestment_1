@@ -5,117 +5,111 @@
     <title>CVE Detail</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
-        h1 { margin-bottom: 10px; }
-        table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+        h1 { font-size: 24px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         th { background-color: #f4f4f4; }
+        .section { margin-top: 20px; }
     </style>
 </head>
 <body>
-    <h1 id="cveTitle">CVE Detail</h1>
-    <div id="description"></div>
+    <h1 id="cveTitle">CVE Details</h1>
 
-    <h2>CVSS v2 Metrics</h2>
-    <p>Severity: <span id="severity"></span></p>
-    <p>Base Score: <span id="baseScore"></span></p>
-    <p>Vector String: <span id="vectorString"></span></p>
+    <div class="section">
+        <strong>Description:</strong>
+        <p id="description"></p>
+    </div>
 
-    <h3>CVSS v2 Breakdown</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>Access Vector</th>
-                <th>Access Complexity</th>
-                <th>Authentication</th>
-                <th>Confidentiality Impact</th>
-                <th>Integrity Impact</th>
-                <th>Availability Impact</th>
-            </tr>
-        </thead>
-        <tbody id="cvssTableBody"></tbody>
-    </table>
+    <div class="section">
+        <h2>CVSS v2 Metrics</h2>
+        <p><strong>Severity:</strong> <span id="severity"></span></p>
+        <p><strong>Score:</strong> <span id="baseScore"></span></p>
+        <p><strong>Vector String:</strong> <span id="vectorString"></span></p>
 
-    <p>Exploitability Score: <span id="exploitScore"></span></p>
-    <p>Impact Score: <span id="impactScore"></span></p>
+        <table id="cvssTable">
+            <thead>
+                <tr>
+                    <th>Access Vector</th>
+                    <th>Access Complexity</th>
+                    <th>Authentication</th>
+                    <th>Confidentiality Impact</th>
+                    <th>Integrity Impact</th>
+                    <th>Availability Impact</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
 
-    <h3>Configurations (CPE)</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>CPE</th>
-                <th>Criteria</th>
-                <th>Match Criteria ID</th>
-                <th>Vulnerable</th>
-            </tr>
-        </thead>
-        <tbody id="cpeTableBody"></tbody>
-    </table>
+        <p><strong>Exploitability Score:</strong> <span id="exploitabilityScore"></span></p>
+        <p><strong>Impact Score:</strong> <span id="impactScore"></span></p>
+    </div>
+
+    <div class="section">
+        <h2>CPE Configurations</h2>
+        <table id="cpeTable">
+            <thead>
+                <tr>
+                    <th>Criteria</th>
+                    <th>Match Criteria ID</th>
+                    <th>Vulnerable</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
 
     <script>
-        // Get CVE ID from URL, e.g., /cves/CVE-1999-0334
-        const urlParts = window.location.pathname.split('/');
-        const cveId = urlParts[urlParts.length - 1];
+        const cveId = "{{ cve_id }}";
 
-        async function fetchCveDetail() {
+        async function fetchCVE() {
             const res = await fetch(`/cves/${cveId}`);
-            const data = await res.json();
+            const cve = await res.json();
 
-            // Title & description
-            document.getElementById('cveTitle').innerText = data.cve_id;
-            document.getElementById('description').innerText = data.description;
+            document.getElementById('cveTitle').innerText = cve.cve_id;
+            document.getElementById('description').innerText = cve.description;
 
-            // CVSS v2 metrics
-            if (data.metrics && data.metrics.cvssMetricV2) {
-                const metric = data.metrics.cvssMetricV2[0];
-                const cvss = metric.cvssData;
+            // Parse metrics string into JSON
+const metrics = cve.metrics ? JSON.parse(cve.metrics)?.cvssMetricV2?.[0] : null;
 
-                document.getElementById('severity').innerText = metric.baseSeverity || '';
-                document.getElementById('baseScore').innerText = cvss.baseScore || '';
-                document.getElementById('vectorString').innerText = cvss.vectorString || '';
+if (metrics) {
+    const cvss = metrics.cvssData;
+    document.getElementById('severity').innerText = metrics.baseSeverity || "N/A";
+    document.getElementById('baseScore').innerText = cvss.baseScore || "N/A";
+    document.getElementById('vectorString').innerText = cvss.vectorString || "N/A";
+    document.getElementById('exploitabilityScore').innerText = metrics.exploitabilityScore || "N/A";
+    document.getElementById('impactScore').innerText = metrics.impactScore || "N/A";
 
-                // Breakdown table
-                const tbody = document.getElementById('cvssTableBody');
-                tbody.innerHTML = `
-                    <tr>
-                        <td>${cvss.accessVector || ''}</td>
-                        <td>${cvss.accessComplexity || ''}</td>
-                        <td>${cvss.authentication || ''}</td>
-                        <td>${cvss.confidentialityImpact || ''}</td>
-                        <td>${cvss.integrityImpact || ''}</td>
-                        <td>${cvss.availabilityImpact || ''}</td>
-                    </tr>
-                `;
+    const tbody = document.querySelector('#cvssTable tbody');
+    tbody.innerHTML = `
+        <tr>
+            <td>${cvss.accessVector || "N/A"}</td>
+            <td>${cvss.accessComplexity || "N/A"}</td>
+            <td>${cvss.authentication || "N/A"}</td>
+            <td>${cvss.confidentialityImpact || "N/A"}</td>
+            <td>${cvss.integrityImpact || "N/A"}</td>
+            <td>${cvss.availabilityImpact || "N/A"}</td>
+        </tr>
+    `;
+}
 
-                document.getElementById('exploitScore').innerText = metric.exploitabilityScore || '';
-                document.getElementById('impactScore').innerText = metric.impactScore || '';
-            }
-
-            // CPE configurations
-            const cpeBody = document.getElementById('cpeTableBody');
-            cpeBody.innerHTML = '';
-            if (data.configurations && data.configurations.length > 0) {
-                data.configurations.forEach(node => {
-                    if (node.nodes) {
-                        node.nodes.forEach(subNode => {
-                            if (subNode.cpeMatch) {
-                                subNode.cpeMatch.forEach(cpe => {
-                                    const row = document.createElement('tr');
-                                    row.innerHTML = `
-                                        <td>${cpe.criteria || ''}</td>
-                                        <td>${cpe.criteria || ''}</td>
-                                        <td>${cpe.matchCriteriaId || ''}</td>
-                                        <td>${cpe.vulnerable}</td>
-                                    `;
-                                    cpeBody.appendChild(row);
-                                });
-                            }
-                        });
-                    }
-                });
-            }
+// Parse configurations string into JSON
+const configurations = cve.configurations ? JSON.parse(cve.configurations)?.[0]?.nodes?.[0]?.cpeMatch || [] : [];
+const cpeTbody = document.querySelector('#cpeTable tbody');
+cpeTbody.innerHTML = "";
+configurations.forEach(cpe => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>${cpe.criteria || "N/A"}</td>
+        <td>${cpe.matchCriteriaId || "N/A"}</td>
+        <td>${cpe.vulnerable || "N/A"}</td>
+    `;
+    cpeTbody.appendChild(row);
+});
         }
 
-        fetchCveDetail();
+        fetchCVE();
     </script>
 </body>
 </html>

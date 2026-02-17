@@ -9,7 +9,9 @@ required_columns = {
     "description": "TEXT",
     "base_score": "FLOAT",
     "identifier": "TEXT",
-    "status": "TEXT"
+    "status": "TEXT",
+    "metrics": "TEXT",
+    "configurations": "TEXT"
 }
 
 with engine.connect() as conn:
@@ -21,7 +23,7 @@ with engine.connect() as conn:
             print(f"Adding column '{col_name}'")
             try:
                 conn.execute(text(f'ALTER TABLE cves ADD COLUMN {col_name} {col_type}'))
-            except OperationalError as e:
+            except Exception as e:
                 print(f"Could not add column '{col_name}': {e}")
 
 print("Migration completed.")

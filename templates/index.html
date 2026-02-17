@@ -71,7 +71,7 @@
 
             data.data.forEach((cve, index) => {
                 const row = document.createElement('tr');
-                row.onclick = () => { window.location.href = `/cves/${cve.cve_id}`; };
+                row.onclick = () => { window.location.href = `/cves/${cve.cve_id}/view`; };
                 row.innerHTML = `
     <td>${skip + index + 1}</td>
     <td>${cve.cve_id}</td>

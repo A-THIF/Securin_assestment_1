@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Float, DateTime
+from sqlalchemy import Column, String, Float, DateTime, Text
 from core.database import Base
 
 class CVE(Base):
@@ -11,6 +11,9 @@ class CVE(Base):
     base_score = Column(Float)
     identifier = Column(String, nullable=True)  # email or owner identifier
     status = Column(String, nullable=True)      # e.g., 'Vulnerable', 'Rejected', etc.
+    metrics = Column(Text, nullable=True)       # store JSON as string
+    configurations = Column(Text, nullable=True)  # store CPE configs as JSON string
+
 
 
     # Add this helper to convert model instance to dictionary

@@ -1,4 +1,5 @@
 import requests
+import json 
 from sqlalchemy.orm import Session
 from models.model import CVE
 from datetime import datetime
@@ -38,6 +39,8 @@ def sync_cves_batch(db: Session, batch_size: int = 50):
         last_modified = datetime.fromisoformat(cve_data["lastModified"].replace("Z", "+00:00"))
 
         metrics = cve_data.get("metrics", {})
+        configurations = cve_data.get("configurations", {})
+
         base_score = None
         if "cvssMetricV31" in metrics:
             base_score = metrics["cvssMetricV31"][0]["cvssData"]["baseScore"]
@@ -52,7 +55,9 @@ def sync_cves_batch(db: Session, batch_size: int = 50):
             last_modified=last_modified,
             base_score=base_score,
             identifier=identifier,
-            status=status
+            status=status,
+            metrics=json.dumps(metrics),  # Store as JSON string
+            configurations=json.dumps(configurations)  # Store as JSON string
         )
 
         db.merge(db_cve)
